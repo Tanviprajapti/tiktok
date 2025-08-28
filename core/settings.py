@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 from decouple import config
 import os
 
@@ -63,10 +63,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'postgres'),
-        'USER': os.getenv('DB_USER', 'tanvi'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'Swordfish12'),
-        'HOST': os.getenv('DB_HOST', 'tiktokappdb.postgres.database.azure.com'),
+        'NAME': os.getenv('DB_NAME', 'video'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'abcdefghi'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
@@ -107,7 +107,11 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 LOGIN_REDIRECT_URL = 'home'
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'home'
-
+# Azure Storage Settings (for production)
+AZURE_ACCOUNT_NAME = config('AZURE_ACCOUNT_NAME', default='st7bb2xftawqsce')
+AZURE_ACCOUNT_KEY = config('AZURE_ACCOUNT_KEY', default='vsBhcA7fPI8XugPwlkbNEp28foCquUhpGnVH96K96Fwh6SOsLLUDeugyTLeML19y7b5I5T2CeGbb+AStZIPPAA==')
+AZURE_CONTAINER = config('AZURE_CONTAINER', default='tiktokapp')
+AZURE_CUSTOM_DOMAIN = f'{AZURE_ACCOUNT_NAME}.blob.core.windows.net'
 
 if AZURE_ACCOUNT_NAME and AZURE_ACCOUNT_KEY:
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'

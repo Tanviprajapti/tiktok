@@ -1,0 +1,556 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<style>
+    :root {
+        --tiktok-black: #000000;
+        --tiktok-white: #FFFFFF;
+        --tiktok-red: #EE1D52;
+        --tiktok-teal: #69C9D0;
+        --tiktok-dark: #1A1A1A;
+        --tiktok-light-gray: #F1F1F2;
+    }
+
+    .tiktok-profile-container {
+        background-color: var(--tiktok-black);
+        min-height: 100vh;
+        padding: 20px;
+        font-family: 'Proxima Nova', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        color: var(--tiktok-white);
+    }
+
+    .tiktok-card {
+        background-color: var(--tiktok-dark);
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+
+    .tiktok-card-header {
+        background-color: var(--tiktok-dark);
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .tiktok-card-header h3 {
+        margin: 0;
+        font-weight: bold;
+        font-size: 1.5rem;
+        color: var(--tiktok-white);
+    }
+
+    .tiktok-card-body {
+        padding: 20px;
+    }
+
+    .tiktok-avatar-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .tiktok-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--tiktok-red);
+    }
+
+    .tiktok-default-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: var(--tiktok-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--tiktok-red);
+        color: var(--tiktok-light-gray);
+        font-size: 2.5rem;
+    }
+
+    .tiktok-avatar-upload-label {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background-color: var(--tiktok-red);
+        border-radius: 50%;
+        padding: 8px;
+        cursor: pointer;
+        color: var(--tiktok-white);
+        transition: all 0.3s ease;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tiktok-avatar-upload-label:hover {
+        background-color: #FF4D6A;
+        transform: scale(1.1);
+    }
+
+    .tiktok-btn {
+        background-color: var(--tiktok-red);
+        border: none;
+        border-radius: 25px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--tiktok-white);
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .tiktok-btn:hover {
+        background-color: #FF4D6A;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(238, 29, 82, 0.4);
+    }
+
+    .tiktok-creator-badge {
+        background-color: var(--tiktok-red);
+        color: var(--tiktok-white);
+        font-size: 0.8rem;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .tiktok-viewer-badge {
+        background-color: var(--tiktok-light-gray);
+        color: var(--tiktok-dark);
+        font-size: 0.8rem;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .tiktok-bio {
+        color: var(--tiktok-light-gray);
+        font-size: 0.9rem;
+        margin-top: 10px;
+        max-width: 300px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .tiktok-stats-card {
+        background-color: var(--tiktok-dark);
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        margin-top: 20px;
+    }
+
+    .tiktok-stats-header {
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .tiktok-stats-header h5 {
+        margin: 0;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: var(--tiktok-white);
+    }
+
+    .tiktok-stats-body {
+        padding: 20px;
+    }
+
+    .tiktok-stat-icon {
+        background-color: var(--tiktok-dark);
+        border: 1px solid var(--tiktok-red);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--tiktok-red);
+        font-size: 1.5rem;
+        margin: 0 auto;
+    }
+
+    .tiktok-stat-value {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-top: 10px;
+        color: var(--tiktok-white);
+        text-align: center;
+    }
+
+    .tiktok-stat-label {
+        font-size: 0.85rem;
+        color: var(--tiktok-light-gray);
+        margin-bottom: 0;
+        text-align: center;
+    }
+
+    /* Form Styling */
+    .tiktok-form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .tiktok-form-label {
+        color: var(--tiktok-white);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .tiktok-form-control {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        color: var(--tiktok-white);
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .tiktok-form-control:focus {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-color: var(--tiktok-red);
+        color: var(--tiktok-white);
+        box-shadow: 0 0 0 0.2rem rgba(238, 29, 82, 0.25);
+    }
+
+    .tiktok-form-control::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Crispy Forms Override */
+    .form-group label {
+        color: var(--tiktok-white) !important;
+        font-weight: 600;
+    }
+
+    .form-control {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 10px !important;
+        color: var(--tiktok-white) !important;
+        padding: 12px 15px !important;
+    }
+
+    .form-control:focus {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        border-color: var(--tiktok-red) !important;
+        box-shadow: 0 0 0 0.2rem rgba(238, 29, 82, 0.25) !important;
+        color: var(--tiktok-white) !important;
+    }
+
+    /* Textarea specific styling */
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    /* Success/Error Messages */
+    .tiktok-alert {
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border: none;
+    }
+
+    .tiktok-alert-success {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #d4edda;
+        border-left: 4px solid #28a745;
+    }
+
+    .tiktok-alert-error {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #f8d7da;
+        border-left: 4px solid #dc3545;
+    }
+
+    /* Loading animation for avatar upload */
+    .tiktok-avatar-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--tiktok-red);
+        font-size: 1.5rem;
+    }
+
+    .tiktok-spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .tiktok-profile-container {
+            padding: 15px;
+        }
+
+        .tiktok-avatar,
+        .tiktok-default-avatar {
+            width: 80px;
+            height: 80px;
+        }
+
+        .tiktok-default-avatar {
+            font-size: 2rem;
+        }
+
+        .tiktok-card-header h3,
+        .tiktok-stats-header h5 {
+            font-size: 1.2rem;
+        }
+
+        .tiktok-btn {
+            font-size: 0.85rem;
+            padding: 8px 15px;
+        }
+
+        .tiktok-stat-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+        }
+
+        .tiktok-stat-value {
+            font-size: 1rem;
+        }
+    }
+
+    /* Extra CSS for enhanced styling */
+    .tiktok-gradient-bg {
+        background: linear-gradient(135deg, var(--tiktok-black) 0%, var(--tiktok-dark) 100%);
+    }
+
+    .tiktok-text-gradient {
+        background: linear-gradient(45deg, var(--tiktok-red), var(--tiktok-teal));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .tiktok-hover-effect {
+        transition: all 0.3s ease;
+    }
+
+    .tiktok-hover-effect:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .tiktok-pulse {
+        animation: tiktokPulse 2s infinite;
+    }
+
+    @keyframes tiktokPulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(238, 29, 82, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(238, 29, 82, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(238, 29, 82, 0);
+        }
+    }
+</style>
+
+<div class="tiktok-profile-container tiktok-gradient-bg">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Display Messages -->
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="tiktok-alert {% if message.tags == 'success' %}tiktok-alert-success{% else %}tiktok-alert-error{% endif %}">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="tiktok-card tiktok-hover-effect">
+                <div class="tiktok-card-header">
+                    <h3><i class="fas fa-user-circle me-2"></i>Profile</h3>
+                </div>
+                <div class="tiktok-card-body">
+                    <div class="text-center mb-4">
+                        <div class="tiktok-avatar-container">
+                            {% if user.avatar %}
+                                <img src="{{ user.avatar.url }}" class="tiktok-avatar" alt="Avatar">
+                            {% else %}
+                                <div class="tiktok-default-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            {% endif %}
+                            <label for="avatar-upload" class="tiktok-avatar-upload-label tiktok-pulse">
+                                <i class="fas fa-camera"></i>
+                            </label>
+                        </div>
+                        <h4 class="mt-3">@{{ user.username }}</h4>
+                        {% if user.is_creator %}
+                            <span class="tiktok-creator-badge">Creator</span>
+                        {% else %}
+                            <span class="tiktok-viewer-badge">Viewer</span>
+                        {% endif %}
+                        {% if user.bio %}
+                            <p class="tiktok-bio">{{ user.bio }}</p>
+                        {% else %}
+                            <p class="tiktok-bio text-muted">No bio yet. Tell us about yourself!</p>
+                        {% endif %}
+                    </div>
+                    
+                    <form method="POST" enctype="multipart/form-data" id="profile-form">
+                        {% csrf_token %}
+                        <input type="file" id="avatar-upload" name="avatar" accept="image/*" class="d-none">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ u_form.username|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ u_form.email|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ u_form.bio|as_crispy_field }}
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="tiktok-btn">
+                                <i class="fas fa-save me-2"></i>Update Profile
+                            </button>
+                        </div>
+                    </form>
+                    
+                    {% if not user.is_creator %}
+                    <div class="text-center mt-4">
+                        <a href="{% url 'become_creator' %}" class="tiktok-btn">
+                            <i class="fas fa-star me-2"></i>Become a Creator
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Stats Section -->
+            <div class="tiktok-stats-card tiktok-hover-effect">
+                <div class="tiktok-stats-header">
+                    <h5><i class="fas fa-chart-line me-2"></i>Your Stats</h5>
+                </div>
+                <div class="tiktok-stats-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="tiktok-stat-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <h5 class="tiktok-stat-value">1.2K</h5>
+                            <p class="tiktok-stat-label">Views</p>
+                        </div>
+                        <div class="col-4">
+                            <div class="tiktok-stat-icon">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <h5 class="tiktok-stat-value">347</h5>
+                            <p class="tiktok-stat-label">Likes</p>
+                        </div>
+                        <div class="col-4">
+                            <div class="tiktok-stat-icon">
+                                <i class="fas fa-share-alt"></i>
+                            </div>
+                            <h5 class="tiktok-stat-value">89</h5>
+                            <p class="tiktok-stat-label">Shares</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Avatar upload preview
+        const avatarUpload = document.getElementById('avatar-upload');
+        const avatarContainer = document.querySelector('.tiktok-avatar-container');
+        
+        if (avatarUpload && avatarContainer) {
+            avatarUpload.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    // Show loading indicator
+                    const loadingDiv = document.createElement('div');
+                    loadingDiv.className = 'tiktok-avatar-loading';
+                    loadingDiv.innerHTML = '<i class="fas fa-spinner tiktok-spinner"></i>';
+                    avatarContainer.appendChild(loadingDiv);
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Remove loading indicator
+                        if (loadingDiv.parentNode) {
+                            loadingDiv.parentNode.removeChild(loadingDiv);
+                        }
+                        
+                        let avatarImg = avatarContainer.querySelector('.tiktok-avatar');
+                        let defaultAvatar = avatarContainer.querySelector('.tiktok-default-avatar');
+                        
+                        if (avatarImg) {
+                            // Update existing image
+                            avatarImg.src = e.target.result;
+                        } else if (defaultAvatar) {
+                            // Replace default avatar with image
+                            const newAvatar = document.createElement('img');
+                            newAvatar.src = e.target.result;
+                            newAvatar.className = 'tiktok-avatar';
+                            newAvatar.alt = 'Avatar';
+                            defaultAvatar.parentNode.replaceChild(newAvatar, defaultAvatar);
+                        } else {
+                            // Create new image if neither exists
+                            const newAvatar = document.createElement('img');
+                            newAvatar.src = e.target.result;
+                            newAvatar.className = 'tiktok-avatar';
+                            newAvatar.alt = 'Avatar';
+                            avatarContainer.insertBefore(newAvatar, avatarContainer.firstChild);
+                        }
+                    };
+                    
+                    reader.onerror = function() {
+                        // Remove loading indicator on error
+                        if (loadingDiv.parentNode) {
+                            loadingDiv.parentNode.removeChild(loadingDiv);
+                        }
+                        alert('Error loading image. Please try again.');
+                    };
+                    
+                    reader.readAsDataURL(file);
+                    
+                    // Auto-submit the form when a new image is selected
+                    setTimeout(() => {
+                        document.getElementById('profile-form').submit();
+                    }, 500);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% endblock %}

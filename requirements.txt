@@ -1,0 +1,9 @@
+﻿Django>=4.0
+Pillow
+django-embed-video
+psycopg2-binary
+django-crispy-forms
+crispy-bootstrap5
+python-decouple
+gunicorn
+whitenoise

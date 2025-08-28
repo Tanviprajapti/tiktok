@@ -1,0 +1,681 @@
+{% extends "base.html" %}
+{% load embed_video_tags %}
+{% load static %}
+
+{% block content %}
+<div class="tiktok-container">
+    <!-- Header with Logo and Search -->
+    <div class="tiktok-header">
+        <div class="header-top">
+            <div class="logo-container">
+                <div class="tiktok-logo">
+                    <i class="fab fa-tiktok"></i>
+                    <span>TikTok</span>
+                </div>
+            </div>
+            
+            <!-- Search Form -->
+            <form method="GET" action="{% url 'home' %}" class="tiktok-search">
+                <div class="search-container">
+                    <input type="text" name="q" class="search-input" placeholder="Search TikTok..." 
+                           value="{{ request.GET.q }}">
+                    <button class="search-btn" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    {% if request.GET.q %}
+                    <a href="{% url 'home' %}" class="search-clear">
+                        <i class="fas fa-times"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+        
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">For You</button>
+            <button class="filter-tab" data-filter="following">Following</button>
+            <button class="filter-tab" data-filter="trending">Trending</button>
+            <button class="filter-tab" data-filter="live">LIVE</button>
+        </div>
+    </div>
+
+    <!-- Search Results Info -->
+    {% if request.GET.q %}
+    <div class="search-results-alert">
+        <i class="fas fa-search"></i> 
+        Results for <strong>"{{ request.GET.q }}"</strong>
+        {% if page_obj.paginator.count == 0 %}
+            - No videos found
+        {% else %}
+            - {{ page_obj.paginator.count }} video{{ page_obj.paginator.count|pluralize }}
+        {% endif %}
+        <a href="{% url 'home' %}" class="clear-search">Clear</a>
+    </div>
+    {% endif %}
+
+    <!-- Video List -->
+    <div class="tiktok-feed">
+        {% for video in page_obj %}
+        <div class="tiktok-video-card" data-created="{{ video.created_at|date:'U' }}" data-views="{{ video.view_count }}" data-likes="{{ video.like_count }}">
+            <a href="{% url 'videos:video_detail' video.id %}" class="video-link">
+                <div class="video-container">
+                    {% if video.thumbnail %}
+                        <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="video-thumbnail">
+                    {% elif video.video_file %}
+                        <video class="video-preview" muted>
+                            <source src="{{ video.video_file.url }}" type="video/mp4">
+                        </video>
+                    {% else %}
+                        <div class="thumbnail-placeholder">
+                            <i class="fas fa-video"></i>
+                        </div>
+                    {% endif %}
+                    <div class="play-overlay">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <div class="video-duration">2:15</div>
+                </div>
+                
+                <div class="video-info">
+                    <div class="creator-info">
+                        <span class="creator-avatar">
+                            {% if video.user.profile_pic %}
+                                <img src="{{ video.user.profile_pic.url }}" alt="{{ video.user.username }}">
+                            {% else %}
+                                <div class="default-avatar">
+                                    {{ video.user.username|first|upper }}
+                                </div>
+                            {% endif %}
+                        </span>
+                        <span class="creator-name">@{{ video.user.username }}</span>
+                    </div>
+                    <h3 class="video-title">{{ video.title }}</h3>
+                    <div class="video-stats">
+                        <span class="stat"><i class="fas fa-heart"></i> {{ video.like_count }}</span>
+                        <span class="stat"><i class="fas fa-comment"></i> {{ video.comment_count }}</span>
+                        <span class="stat"><i class="fas fa-eye"></i> {{ video.view_count }}</span>
+                    </div>
+                </div>
+            </a>
+            
+            <div class="action-buttons">
+                <button class="action-btn like-btn {% if user in video.likes.all %}active{% endif %}" data-video-id="{{ video.id }}">
+                    <i class="far fa-heart"></i>
+                    <span class="count">{{ video.like_count }}</span>
+                </button>
+                <button class="action-btn comment-btn" data-bs-toggle="modal" data-bs-target="#commentModal">
+                    <i class="far fa-comment"></i>
+                    <span class="count">{{ video.comment_count }}</span>
+                </button>
+                <button class="action-btn share-btn" data-bs-toggle="modal" data-bs-target="#shareModal" data-video-id="{{ video.id }}">
+                    <i class="fas fa-share"></i>
+                    <span class="count">{{ video.shares.count }}</span>
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-video"></i>
+            </div>
+            <h3>No videos yet</h3>
+            <p>{% if user.is_authenticated and user.is_creator %}Be the first to share a video!{% else %}Join TikTok to start sharing{% endif %}</p>
+            {% if user.is_authenticated and user.is_creator %}
+            <a href="{% url 'videos:video_upload' %}" class="tiktok-btn">
+                <i class="fas fa-plus"></i> Create Video
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="tiktok-pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-arrow">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="page-number active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-number">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="page-arrow">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    :root {
+        --tiktok-black: #000000;
+        --tiktok-white: #FFFFFF;
+        --tiktok-red: #EE1D52;
+        --tiktok-teal: #69C9D0;
+        --tiktok-dark: #1A1A1A;
+        --tiktok-light-gray: #F1F1F2;
+    }
+
+    .tiktok-container {
+        background-color: var(--tiktok-black);
+        min-height: 100vh;
+        padding: 15px;
+        color: var(--tiktok-white);
+        font-family: 'Proxima Nova', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    .tiktok-header {
+        margin-bottom: 20px;
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .tiktok-logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--tiktok-white);
+    }
+
+    .tiktok-logo i {
+        color: var(--tiktok-red);
+        font-size: 1.8rem;
+    }
+
+    .tiktok-search {
+        flex-grow: 1;
+        max-width: 350px;
+    }
+
+    .search-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 10px 40px 10px 15px;
+        border-radius: 20px;
+        border: none;
+        background-color: var(--tiktok-dark);
+        color: var(--tiktok-white);
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--tiktok-red);
+    }
+
+    .search-btn {
+        position: absolute;
+        right: 35px;
+        background: none;
+        border: none;
+        color: var(--tiktok-light-gray);
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    .search-clear {
+        position: absolute;
+        right: 10px;
+        color: var(--tiktok-light-gray);
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+
+    .filter-tab {
+        background: none;
+        border: none;
+        color: var(--tiktok-light-gray);
+        padding: 6px 14px;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }
+
+    .filter-tab.active {
+        color: var(--tiktok-white);
+        border-bottom: 2px solid var(--tiktok-red);
+    }
+
+    .filter-tab:hover:not(.active) {
+        color: var(--tiktok-white);
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .search-results-alert {
+        background: var(--tiktok-dark);
+        border-left: 4px solid var(--tiktok-red);
+        padding: 10px 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+    }
+
+    .clear-search {
+        margin-left: auto;
+        color: var(--tiktok-red);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .tiktok-feed {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-bottom: 30px;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .tiktok-video-card {
+        position: relative;
+        background: var(--tiktok-dark);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .video-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .video-container {
+        position: relative;
+        padding-top: 177.78%; /* 9:16 aspect ratio */
+        overflow: hidden;
+    }
+
+    .video-thumbnail,
+    .video-preview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .tiktok-video-card:hover .video-thumbnail,
+    .tiktok-video-card:hover .video-preview {
+        transform: scale(1.03);
+    }
+
+    .thumbnail-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--tiktok-dark);
+        color: var(--tiktok-white);
+        font-size: 2rem;
+    }
+
+    .play-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .tiktok-video-card:hover .play-overlay {
+        opacity: 1;
+    }
+
+    .play-overlay i {
+        font-size: 2.5rem;
+        color: var(--tiktok-white);
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .video-duration {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: var(--tiktok-white);
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .video-info {
+        padding: 10px 15px;
+    }
+
+    .creator-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .creator-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+
+    .creator-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .default-avatar {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--tiktok-red);
+        color: var(--tiktok-white);
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+
+    .creator-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--tiktok-white);
+    }
+
+    .video-title {
+        margin: 0 0 10px 0;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .video-stats {
+        display: flex;
+        gap: 12px;
+        font-size: 0.8rem;
+        color: var(--tiktok-light-gray);
+    }
+
+    .stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .action-buttons {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .action-btn {
+        background: none;
+        border: none;
+        color: var(--tiktok-white);
+        font-size: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .action-btn i {
+        font-size: 2rem;
+    }
+
+    .action-btn.active {
+        color: var(--tiktok-red);
+    }
+
+    .action-btn .count {
+        font-size: 0.8rem;
+        margin-top: 5px;
+    }
+
+    .action-btn:hover {
+        color: var(--tiktok-red);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        color: var(--tiktok-light-gray);
+    }
+
+    .empty-icon {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+        color: var(--tiktok-red);
+    }
+
+    .empty-state h3 {
+        margin-bottom: 10px;
+        font-size: 1.4rem;
+    }
+
+    .empty-state p {
+        color: var(--tiktok-light-gray);
+        margin-bottom: 15px;
+    }
+
+    .tiktok-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--tiktok-red);
+        color: var(--tiktok-white);
+        padding: 8px 18px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .tiktok-btn:hover {
+        transform: translateY(-2px);
+        background: #FF4D6A;
+        color: var(--tiktok-white);
+    }
+
+    .tiktok-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin: 20px 0;
+    }
+
+    .page-arrow,
+    .page-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        text-decoration: none;
+        color: var(--tiktok-white);
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .page-arrow {
+        background: var(--tiktok-dark);
+    }
+
+    .page-arrow:hover {
+        background: var(--tiktok-red);
+    }
+
+    .page-number {
+        background: transparent;
+        border: 1px solid var(--tiktok-light-gray);
+    }
+
+    .page-number.active {
+        background: var(--tiktok-red);
+        border-color: var(--tiktok-red);
+    }
+
+    .page-number:hover:not(.active) {
+        background: var(--tiktok-dark);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .header-top {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .tiktok-search {
+            max-width: 100%;
+        }
+        
+        .tiktok-feed {
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .tiktok-container {
+            padding: 10px;
+        }
+        
+        .video-title {
+            font-size: 0.9rem;
+        }
+        
+        .action-buttons {
+            right: 5px;
+        }
+        
+        .action-btn i {
+            font-size: 1.8rem;
+        }
+        
+        .action-btn .count {
+            font-size: 0.75rem;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter tabs functionality
+        const filterTabs = document.querySelectorAll('.filter-tab');
+        
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                filterTabs.forEach(t => t.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Get the filter type
+                const filterType = this.getAttribute('data-filter');
+                
+                // Here you would typically make an AJAX request or filter the content
+                console.log('Filtering by:', filterType);
+                
+                // For now, we'll just show a message
+                // In a real implementation, you would filter the videos
+            });
+        });
+        
+        // Like button functionality (handled in base.html, but ensure compatibility)
+        const likeButtons = document.querySelectorAll('.like-btn');
+        
+        likeButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // The actual like functionality is handled in base.html
+                // This is just a fallback for visual feedback
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('far')) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    this.classList.add('active');
+                } else {
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                    this.classList.remove('active');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

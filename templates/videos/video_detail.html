@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+{% load embed_video_tags %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<style>
+    :root {
+        --tiktok-black: #000000;
+        --tiktok-white: #FFFFFF;
+        --tiktok-red: #EE1D52;
+        --tiktok-teal: #69C9D0;
+        --tiktok-dark: #1A1A1A;
+        --tiktok-light-gray: #F1F1F2;
+    }
+
+    .tiktok-theme {
+        background-color: var(--tiktok-black);
+        color: var(--tiktok-white);
+        min-height: 100vh;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .tiktok-video-container {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+        background-color: var(--tiktok-dark);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .tiktok-video-player {
+        width: 100%;
+        aspect-ratio: 9/16;
+        background-color: var(--tiktok-black);
+        object-fit: cover;
+    }
+
+    .tiktok-btn {
+        border: none;
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .tiktok-btn-primary {
+        background: var(--tiktok-red);
+        color: var(--tiktok-white);
+    }
+
+    .tiktok-btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--tiktok-white);
+        backdrop-filter: blur(10px);
+    }
+
+    .tiktok-btn:hover {
+        transform: translateY(-2px);
+        background: #FF4D6A;
+    }
+
+    .tiktok-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid var(--tiktok-white);
+        object-fit: cover;
+    }
+
+    .tiktok-icon {
+        font-size: 1.8rem;
+        color: var(--tiktok-white);
+    }
+
+    .tiktok-comment {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+
+    .tiktok-action-buttons {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        z-index: 1000;
+    }
+
+    .action-btn {
+        background: none;
+        border: none;
+        color: var(--tiktok-white);
+        font-size: 1.2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn i {
+        font-size: 2.2rem;
+    }
+
+    .action-btn.active {
+        color: var(--tiktok-red);
+    }
+
+    .action-btn:hover {
+        color: var(--tiktok-red);
+    }
+
+    .action-btn small {
+        font-size: 0.8rem;
+        margin-top: 5px;
+    }
+
+    .tiktok-modal {
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(10px);
+    }
+
+    .tiktok-modal-content {
+        background: var(--tiktok-dark);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .tiktok-video-info {
+        padding: 10px 15px;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .tiktok-video-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+</style>
+
+<div class="tiktok-theme">
+    <div class="tiktok-video-container">
+        <!-- Video Header -->
+        <div class="tiktok-video-header">
+            <div class="d-flex align-items-center">
+                {% if video.user.avatar %}
+                    <img src="{{ video.user.avatar.url }}" class="tiktok-avatar me-2" alt="Avatar">
+                {% else %}
+                    <div class="tiktok-avatar bg-dark d-flex align-items-center justify-content-center me-2">
+                        <i class="fas fa-user tiktok-icon"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <h6 class="mb-0 text-white">@{{ video.user.username }}</h6>
+                    <small class="text-muted">{{ video.created_at|timesince }} ago</small>
+                </div>
+            </div>
+            <div>
+                <span class="badge bg-dark text-white"><i class="fas fa-eye"></i> {{ video.view_count }}</span>
+            </div>
+        </div>
+
+        <!-- Video Player -->
+        <div class="tiktok-video-player">
+            {% if video.video_file %}
+                <video controls class="w-100 h-100" poster="{{ video.thumbnail.url }}" style="object-fit: cover;">
+                    <source src="{{ video.video_file.url }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            {% else %}
+                {% video video.youtube_url as my_video %}
+                    {% video my_video "100%x100%" %}
+                {% endvideo %}
+            {% endif %}
+        </div>
+
+        <!-- Action Buttons (Right Side) -->
+        <div class="tiktok-action-buttons">
+            <button class="action-btn like-btn {% if user_liked %}active{% endif %}" data-video-id="{{ video.id }}">
+                <i class="{% if user_liked %}fas{% else %}far{% endif %} fa-heart"></i>
+                <small>{{ video.like_count }}</small>
+            </button>
+            <button class="action-btn" data-bs-toggle="modal" data-bs-target="#commentModal">
+                <i class="far fa-comment"></i>
+                <small>{{ video.comment_count }}</small>
+            </button>
+            <button class="action-btn" data-bs-toggle="modal" data-bs-target="#shareModal" data-video-id="{{ video.id }}">
+                <i class="fas fa-share"></i>
+                <small>{{ video.shares.count }}</small>
+            </button>
+        </div>
+
+        <!-- Video Description -->
+        <div class="tiktok-video-info">
+            <h4 class="text-white mb-2">{{ video.title }}</h4>
+            <p class="text-light">{{ video.description }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal fade tiktok-modal" id="commentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content tiktok-modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white">Comments ({{ video.comment_count }})</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% if user.is_authenticated %}
+                <form id="comment-form" class="mb-3" data-video-id="{{ video.id }}">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        {{ comment_form.text|as_crispy_field }}
+                        <button type="submit" class="btn tiktok-btn tiktok-btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted">Please <a href="{% url 'login' %}" class="text-white" style="color: var(--tiktok-red) !important;">login</a> to comment.</p>
+                </div>
+                {% endif %}
+                
+                <div id="comments-container" class="comment-section" style="max-height: 300px; overflow-y: auto;">
+                    {% for comment in comments %}
+                    <div class="tiktok-comment">
+                        <div class="d-flex align-items-start">
+                            {% if comment.user.avatar %}
+                                <img src="{{ comment.user.avatar.url }}" class="tiktok-avatar me-2" alt="Avatar" style="width: 36px; height: 36px;">
+                            {% else %}
+                                <div class="tiktok-avatar bg-dark d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                                    <i class="fas fa-user" style="font-size: 1rem;"></i>
+                                </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <strong class="text-white">@{{ comment.user.username }}</strong>
+                                    <small class="text-muted">{{ comment.created_at|timesince }} ago</small>
+                                </div>
+                                <p class="mb-0 text-light">{{ comment.text }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-comment-slash tiktok-icon fa-2x mb-2"></i>
+                        <p class="text-muted">No comments yet. Be the first to comment!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade tiktok-modal" id="shareModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content tiktok-modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white">Share This Video</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="row g-3">
+                    <div class="col-4">
+                        <button class="btn tiktok-btn-secondary w-100 share-btn" data-platform="facebook" data-video-id="{{ video.id }}">
+                            <i class="fab fa-facebook-f fa-2x mb-2"></i>
+                            <br>
+                            <small>Facebook</small>
+                        </button>
+                    </div>
+                    <div class="col-4">
+                        <button class="btn tiktok-btn-secondary w-100 share-btn" data-platform="twitter" data-video-id="{{ video.id }}">
+                            <i class="fab fa-twitter fa-2x mb-2"></i>
+                            <br>
+                            <small>Twitter</small>
+                        </button>
+                    </div>
+                    <div class="col-4">
+                        <button class="btn tiktok-btn-secondary w-100 share-btn" data-platform="copy_link" data-video-id="{{ video.id }}">
+                            <i class="fas fa-link fa-2x mb-2"></i>
+                            <br>
+                            <small>Copy Link</small>
+                        </button>
+                    </div>
+                    <div class="col-4">
+                        <button class="btn tiktok-btn-secondary w-100">
+                            <i class="fab fa-whatsapp fa-2x mb-2"></i>
+                            <br>
+                            <small>WhatsApp</small>
+                        </button>
+                    </div>
+                    <div class="col-4">
+                        <button class="btn tiktok-btn-secondary w-100">
+                            <i class="fab fa-instagram fa-2x mb-2"></i>
+                            <br>
+                            <small>Instagram</small>
+                        </button>
+                    </div>
+                    <div class="col-4">
+                        <button class="btn tiktok-btn-secondary w-100">
+                            <i class="fab fa-tiktok fa-2x mb-2"></i>
+                            <br>
+                            <small>TikTok</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Like functionality (already handled in base.html, this ensures compatibility)
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent default action
+                // The actual like functionality is in base.html
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('far')) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    this.classList.add('active');
+                } else {
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                    this.classList.remove('active');
+                }
+            });
+        });
+
+        // Comment form
+        const commentForm = document.getElementById('comment-form');
+        if (commentForm) {
+            commentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const videoId = this.dataset.videoId;
+                
+                fetch(`/interactions/comment/${videoId}/`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const commentsContainer = document.getElementById('comments-container');
+                        const newComment = document.createElement('div');
+                        newComment.className = 'tiktok-comment';
+                        newComment.innerHTML = `
+                            <div class="d-flex align-items-start">
+                                {% if user.avatar %}
+                                    <img src="{{ user.avatar.url }}" class="tiktok-avatar me-2" alt="Avatar" style="width: 36px; height: 36px;">
+                                {% else %}
+                                    <div class="tiktok-avatar bg-dark d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                                        <i class="fas fa-user" style="font-size: 1rem;"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <strong class="text-white">@{{ user.username }}</strong>
+                                        <small class="text-muted">Just now</small>
+                                    </div>
+                                    <p class="mb-0 text-light">${data.comment.text}</p>
+                                </div>
+                            </div>
+                        `;
+                        commentsContainer.prepend(newComment);
+                        
+                        // Update comment count
+                        const commentCount = document.querySelector('[data-bs-target="#commentModal"] small');
+                        commentCount.textContent = parseInt(commentCount.textContent) + 1;
+                        
+                        // Animation for new comment
+                        newComment.style.opacity = '0';
+                        newComment.style.transform = 'translateX(20px)';
+                        newComment.style.transition = 'all 0.3s';
+                        setTimeout(() => {
+                            newComment.style.opacity = '1';
+                            newComment.style.transform = 'translateX(0)';
+                        }, 10);
+                        
+                        this.reset();
+                    }
+                });
+            });
+        }
+
+        // CSRF token helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}

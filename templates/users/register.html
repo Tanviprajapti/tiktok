@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<style>
+    :root {
+        --tiktok-black: #000000;
+        --tiktok-white: #FFFFFF;
+        --tiktok-red: #EE1D52;
+        --tiktok-teal: #69C9D0;
+        --tiktok-dark: #1A1A1A;
+        --tiktok-light-gray: #F1F1F2;
+    }
+
+    .tiktok-register-container {
+        background-color: var(--tiktok-black);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 15px;
+        font-family: 'Proxima Nova', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tiktok-register-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at top, rgba(238, 29, 82, 0.1), transparent 70%);
+        z-index: 0;
+    }
+
+    .tiktok-card {
+        background-color: var(--tiktok-dark);
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 400px;
+        position: relative;
+        z-index: 1;
+        animation: card-appear 0.5s ease-out;
+    }
+
+    @keyframes card-appear {
+        0% { transform: translateY(20px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+
+    .tiktok-card-header {
+        background-color: var(--tiktok-dark);
+        padding: 20px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .tiktok-card-header h3 {
+        margin: 0;
+        font-weight: bold;
+        font-size: 1.8rem;
+        color: var(--tiktok-white);
+    }
+
+    .tiktok-logo {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 10px;
+        display: block;
+        color: var(--tiktok-red);
+    }
+
+    .tiktok-card-body {
+        padding: 20px;
+    }
+
+    .tiktok-btn {
+        background-color: var(--tiktok-red);
+        border: none;
+        border-radius: 25px;
+        padding: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--tiktok-white);
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .tiktok-btn:hover {
+        background-color: #FF4D6A;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(238, 29, 82, 0.4);
+    }
+
+    .form-check {
+        margin: 12px 0;
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .form-check-input {
+        margin-top: 0.3rem;
+        margin-right: 8px;
+        border-radius: 4px;
+        border: 1px solid var(--tiktok-light-gray);
+    }
+
+    .form-check-input:checked {
+        background-color: var(--tiktok-red);
+        border-color: var(--tiktok-red);
+    }
+
+    .form-check-label {
+        font-size: 0.85rem;
+        color: var(--tiktok-light-gray);
+    }
+
+    .form-check-label a {
+        color: var(--tiktok-red);
+        text-decoration: none;
+    }
+
+    .form-check-label a:hover {
+        text-decoration: underline;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: var(--tiktok-white);
+        margin-bottom: 5px;
+    }
+
+    .tiktok-footer {
+        font-size: 0.85rem;
+        color: var(--tiktok-light-gray);
+        text-align: center;
+        margin-top: 15px;
+    }
+
+    .tiktok-footer a {
+        color: var(--tiktok-red);
+        text-decoration: none;
+    }
+
+    .tiktok-footer a:hover {
+        text-decoration: underline;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 576px) {
+        .tiktok-card {
+            max-width: 100%;
+        }
+
+        .tiktok-card-header h3 {
+            font-size: 1.5rem;
+        }
+
+        .tiktok-logo {
+            width: 40px;
+            height: 40px;
+        }
+
+        .tiktok-btn {
+            font-size: 0.9rem;
+            padding: 10px;
+        }
+    }
+</style>
+
+<div class="tiktok-register-container">
+    <div class="tiktok-card">
+        <div class="tiktok-card-header">
+            <i class="fab fa-tiktok tiktok-logo"></i>
+            <h3>Join TikTok</h3>
+        </div>
+        
+        <div class="tiktok-card-body">
+            <form method="POST" action="{% url 'register' %}">
+                {% csrf_token %}
+                
+                {{ form|crispy }}
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                    <label class="form-check-label" for="termsCheck">
+                        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="tiktok-btn">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+            </form>
+
+            <div class="tiktok-footer">
+                <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
+                <p>By registering, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const registerBtn = document.querySelector('.tiktok-btn');
+
+        // Hover animation
+        registerBtn.addEventListener('mouseover', function() {
+            this.style.transform = 'translateY(-3px)';
+            this.style.boxShadow = '0 4px 15px rgba(238, 29, 82, 0.4)';
+        });
+        registerBtn.addEventListener('mouseout', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+</script>
+{% endblock %}

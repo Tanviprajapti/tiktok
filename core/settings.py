@@ -8,8 +8,17 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-key-for-dev')
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
+CSRF_TRUSTED_ORIGINS = [
+    'https://tiktoka-bsd0dkfxhacfe4dy.uksouth-01.azurewebsites.net',
+]
 
+# Also make sure your ALLOWED_HOSTS includes your Azure domain
+ALLOWED_HOSTS = [
+    'tiktoka-bsd0dkfxhacfe4dy.uksouth-01.azurewebsites.net',
+    '.azurewebsites.net',
+    'localhost',
+    '127.0.0.1',
+]
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

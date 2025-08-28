@@ -63,10 +63,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'video'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'abcdefghi'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'NAME': os.getenv('DB_NAME', 'postgres'),
+        'USER': os.getenv('DB_USER', 'tanvi'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'Swordfish12'),
+        'HOST': os.getenv('DB_HOST', 'tiktokappdb.postgres.database.azure.com'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
